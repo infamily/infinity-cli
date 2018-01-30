@@ -1,5 +1,21 @@
 # infinity-data
 
+## Quick start
+
+```
+pip install infdata
+
+$ int init
+
+$ inf install example.com/posts==crawler-1.0.0
+
+$ inf register file.jsonl # registers a source schema
+
+$ inf upload file.jsonl # uploads data to specified infinity server
+```
+
+**Note:** the tokens `['example.com/posts', 'crawler-1.0.0']` together define a unique `[source-specific, crawler-specific]` schema.
+
 This is a simple package that helps read Infinity data format and get data in such format.
 
 Infinity JSON format includes a header line, which specifies schemas (`[S]`) and types (`[T]`) for its records. 
