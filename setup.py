@@ -1,17 +1,69 @@
-from setuptools import find_packages, setup
+from codecs import open
+from os.path import abspath, dirname, join
+from subprocess import call
+
+from setuptools import Command, find_packages, setup
+
+from src import __version__
+
+
+this_dir = abspath(dirname(__file__))
+with open(join(this_dir, 'README.md'), encoding='utf-8') as file:
+    long_description = file.read()
+
+
+class RunTests(Command):
+    """Run all tests."""
+    description = 'run tests'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        """Run all tests!"""
+        errno = call(['py.test', '--cov=src', '--cov-report=term-missing'])
+        raise SystemExit(errno)
+
 
 setup(
-    name='infinity-data',
-    version='0.1.0',
-    description='Manages data with metadata headers, that specify schemas and types.',
-    url='https://github.com/infamily/infinity-data',
-    author='Mindey',
-    author_email='mindey@qq.com',
-    license='UNLICENSE',
+    name = 'infdata',
+    version = __version__,
+    description = 'Package management command for data.',
+    long_description = long_description,
+    url = 'https://github.com/infamily/infinity-data',
+    author = 'Mindey I.',
+    author_email = 'mindey@qq.com',
+    license = 'UNLICENSE',
+    classifiers = [
+        'Intended Audience :: Developers',
+        'Topic :: Utilities',
+        'License :: Public Domain',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ],
+    keywords = 'inf',
     packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires=["boltons"],
+    install_requires = ['docopt'],
     extras_require = {
         'test': ['coverage', 'pytest', 'pytest-cov'],
     },
-    zip_safe=False
+    entry_points = {
+        'console_scripts': [
+            'inf=src.cli:main',
+        ],
+    },
+    cmdclass = {'test': RunTests},
 )
