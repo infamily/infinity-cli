@@ -79,7 +79,7 @@ class Install(Base):
         version = '{}=={}'.format(schema['name'], schema['version'])
         filename = quote_plus(version)
 
-        #todo: add to settings
+        # Todo: add to settings
         DATA_DIRECTORY = os.path.join(os.getcwd(), '.inf/data/')
         if not os.path.exists(DATA_DIRECTORY):
             os.makedirs(DATA_DIRECTORY)
@@ -98,21 +98,25 @@ class Install(Base):
             else:
                 os.remove(target_path)
 
-        # print(json.dumps(schema))
+
         with open(target_path, 'a') as f:
             f.write(json.dumps(schema['specification'][0])+'\n')
 
         def write(results):
             for result in results:
                 if result.get('data'):
-                    # print(json.dumps(result.get('data')))
+
                     with open(target_path, 'a') as f:
                         f.write(json.dumps(result.get('data'))+'\n')
             return len(results)
 
+        from progress.bar import Bar
+        bar = Bar('Progress', max=limit, fill='█')
         written = 0
         if response.get('next'):
-            written += write(response.get('results'))
+            increment = write(response.get('results'))
+            [bar.next() for i in range(increment)]
+            written += increment
             if written >= limit:
                 print('Done.')
                 return
@@ -120,33 +124,12 @@ class Install(Base):
             while response.get('next'):
                 next_page_id = dict(parse_qsl(urlparse(response.get('next')).query)).get('page')
                 response = api.instances.get(schema=get_id(schema['url']), page=next_page_id)
-                written += write(response.get('results'))
+                increment = write(response.get('results'))
+                [bar.next() for i in range(increment)]
+                written += increment
                 if written >= limit:
                     print('Done.')
                     return
-
-
-        # Download instances of the schema.
-
-        # from progress.bar import Bar
-        # bar = Bar('Progress', max=len(records), fill='█')
-        # for i, (record, normalized_record) in enumerate(
-        #         zip(records, normalized_records)):
-        #
-        #     instance = {
-        #         'data': record,
-        #         'info': normalized_record,
-        #         'schema': schema['url'],
-        #         'owner': user[0]['url']
-        #     }
-        #
-        #     api.instances.post(instance)
-        #
-        #     bar.next()
-        #
-        # bar.finish()
-
-
+        bar.finish()
 
         print('Done.')
-

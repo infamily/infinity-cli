@@ -9,8 +9,8 @@ import json_lines
 import configparser
 
 from .base import Base
-from src.utils import take
-from src.utils import standardize
+from infdata.utils import take
+from infdata.utils import standardize
 
 get_id = lambda url: url.rsplit('/', 2)[-2]
 

@@ -4,7 +4,7 @@ from subprocess import call
 
 from setuptools import Command, find_packages, setup
 
-from src import __version__
+from infdata import __version__
 
 
 this_dir = abspath(dirname(__file__))
@@ -25,7 +25,7 @@ class RunTests(Command):
 
     def run(self):
         """Run all tests!"""
-        errno = call(['py.test', '--cov=src', '--cov-report=term-missing'])
+        errno = call(['py.test', '--cov=infdata', '--cov-report=term-missing'])
         raise SystemExit(errno)
 
 
@@ -62,7 +62,7 @@ setup(
     },
     entry_points = {
         'console_scripts': [
-            'inf=src.cli:main',
+            'inf=infdata.cli:main',
         ],
     },
     cmdclass = {'test': RunTests},

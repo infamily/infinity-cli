@@ -4,7 +4,7 @@
 from subprocess import PIPE, Popen as popen
 from unittest import TestCase
 
-from src import __version__ as VERSION
+from infdata import __version__ as VERSION
 
 
 class TestHelp(TestCase):
