@@ -67,7 +67,7 @@ def convert(key, value, meta):
 
     return key, value
 
-def standardize(data, metadata, if_schema_value_type=tuple):
+def standardize(metadata, data, if_schema_value_type=tuple):
     '''
     Combine data with schema and types in metadata by zipping tree.
 
@@ -144,5 +144,8 @@ def standardize(data, metadata, if_schema_value_type=tuple):
     return remapped
 
 
+def take(data):
+    return data[0:1], data[1:]
+
 def normalize(data):
-    return standardize(data[1:], metadata=data[0:1])
+    return standardize(*take(data)[::-1])

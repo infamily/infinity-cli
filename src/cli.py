@@ -5,6 +5,9 @@ Usage:
   inf init
   inf -h | --help
   inf --version
+  inf login
+  inf upload <datafile>
+  inf install <name==version>
 
 Options:
   -h --help                         Show this screen.
@@ -12,6 +15,8 @@ Options:
 
 Examples:
   inf init
+  inf upload data.json
+  inf install example.com/people==crawler-1.0.0
 
 Help:
   For help using this tool, please open an issue on the Github repository:

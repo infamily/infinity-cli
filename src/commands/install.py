@@ -1,0 +1,152 @@
+"""The install command."""
+
+import os
+import json
+import slumber
+import requests
+import json_lines
+import configparser
+from urllib.parse import (
+    urlparse,
+    parse_qsl,
+    quote_plus,
+    unquote_plus
+)
+
+from .base import Base
+
+get_id = lambda url: url.rsplit('/', 2)[-2]
+
+
+class Install(Base):
+    """.
+
+    Given:
+    >>> string = 'example.com/posts==crawler-1.0.0'
+
+    Result:
+    - The string is split into schema_name, schema_version.
+    - The version is looked up, and the records 
+      are downloadeded and saved to the .inf/data/ as json lines
+      named as 
+    - If there are new records, they are appended to the bottom
+      of the file.
+
+    """
+
+    def run(self):
+
+        config_path = os.path.join(os.getcwd(), '.inf/config')
+        config = configparser.ConfigParser()
+        config.optionxform=str
+        config.read(config_path)
+
+        if 'server' in config.sections():
+            root = config['server'].get('root')
+            email = config['server'].get('email')
+            token = config['server'].get('token')
+
+            session = requests.Session()
+            header = {
+                'Authorization': 'Token {}'.format(token)}
+            session.headers.update(header)
+        else:
+            print('Error in registration. Use `inf login`')
+            return
+
+        api = slumber.API(root, session=session)
+        user = api.users.get()
+
+        schema_name_version = self.options.get('<name==version>')
+        #schema_name_version = 'example.com/person==v1'
+
+        if not '==' in schema_name_version:
+            print('Please, use: inf install name==version.')
+            return
+
+        name, version = schema_name_version.rsplit('==', 1)
+
+        # Lookup if the schema exists
+        schemas = api.schemas.get(name=name, version=version).get('results')
+
+        if not schemas:
+            print('Schema ({}=={}) not found.'.format(name,version))
+            return
+
+        schema = schemas[0]
+
+        # Creating a file to store data
+        version = '{}=={}'.format(schema['name'], schema['version'])
+        filename = quote_plus(version)
+
+        #todo: add to settings
+        DATA_DIRECTORY = os.path.join(os.getcwd(), '.inf/data/')
+        if not os.path.exists(DATA_DIRECTORY):
+            os.makedirs(DATA_DIRECTORY)
+
+        target_path = os.path.join(os.getcwd(), '.inf/data/{}'.format(filename))
+
+        response = api.instances.get(schema=get_id(schema['url']))
+        count = response.get('count')
+        limit = int(input('There are totally {} instances. Enter the number to download [all]: '.format(count)) or count)
+
+        if os.path.exists(target_path):
+            proceed = input('The data of this schema already installed. Are you sure you want to reinstall it? [y/N] ')
+            if proceed not in ['y', 'Y']:
+                print('Stopped.')
+                return
+            else:
+                os.remove(target_path)
+
+        # print(json.dumps(schema))
+        with open(target_path, 'a') as f:
+            f.write(json.dumps(schema['specification'][0])+'\n')
+
+        def write(results):
+            for result in results:
+                if result.get('data'):
+                    # print(json.dumps(result.get('data')))
+                    with open(target_path, 'a') as f:
+                        f.write(json.dumps(result.get('data'))+'\n')
+            return len(results)
+
+        written = 0
+        if response.get('next'):
+            written += write(response.get('results'))
+            if written >= limit:
+                print('Done.')
+                return
+
+            while response.get('next'):
+                next_page_id = dict(parse_qsl(urlparse(response.get('next')).query)).get('page')
+                response = api.instances.get(schema=get_id(schema['url']), page=next_page_id)
+                written += write(response.get('results'))
+                if written >= limit:
+                    print('Done.')
+                    return
+
+
+        # Download instances of the schema.
+
+        # from progress.bar import Bar
+        # bar = Bar('Progress', max=len(records), fill='█')
+        # for i, (record, normalized_record) in enumerate(
+        #         zip(records, normalized_records)):
+        #
+        #     instance = {
+        #         'data': record,
+        #         'info': normalized_record,
+        #         'schema': schema['url'],
+        #         'owner': user[0]['url']
+        #     }
+        #
+        #     api.instances.post(instance)
+        #
+        #     bar.next()
+        #
+        # bar.finish()
+
+
+
+        print('Done.')
+

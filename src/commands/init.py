@@ -2,7 +2,6 @@
 
 
 import os
-from json import dumps
 
 from .base import Base
 
@@ -19,4 +18,4 @@ class Init(Base):
         if not os.path.exists(final_directory):
             os.makedirs(final_directory)
 
-        print('Done.') #dumps(self.options, indent=2, sort_keys=True))
+        print('Done.')
