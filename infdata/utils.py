@@ -82,14 +82,14 @@ def standardize(metadata, data, if_schema_value_type=tuple):
   'children': [{'age': 1, 'name': 'Deli'}, {'age': 7, 'name': 'Miki'}],
   'name': 'Dim'}]
 
-    >>> metadata = [{'': [('obj',), ['https://www.wikidata.org/wiki/Q7565']],
-  'address': {'': [('obj',), ['https://www.wikidata.org/wiki/Q319608']],
-   'number': {'': [('int', 'lambda _: int(_)'), ['https://www.wikidata.org/wiki/Q1413235']]},
-   'street': {'': [('str',), ['https://www.wikidata.org/wiki/Q24574749']]}},
-  'children': [{'': [('obj',), ['https://www.wikidata.org/wiki/Q7569']],
-    'age': {'': [('int', 'lambda _: float(_)'), ['https://www.wikidata.org/wiki/Q185836']]},
-    'name': {'': [('str',), ['https://www.wikidata.org/wiki/Q82799']]}}],
-  'name': {'': [('str',), ['https://www.wikidata.org/wiki/Q82799']]}}]
+    >>> metadata = [{'': [['obj'], ['https://www.wikidata.org/wiki/Q7565']],
+  'address': {'': [['obj'], ['https://www.wikidata.org/wiki/Q319608']],
+   'number': {'': [['int', 'lambda _: int(_)'], ['https://www.wikidata.org/wiki/Q1413235']]},
+   'street': {'': [['str'], ['https://www.wikidata.org/wiki/Q24574749']]}},
+  'children': [{'': [['obj'], ['https://www.wikidata.org/wiki/Q7569']],
+    'age': {'': [['int', 'lambda _: float(_)'], ['https://www.wikidata.org/wiki/Q185836']]},
+    'name': {'': [['str'], ['https://www.wikidata.org/wiki/Q82799']]}}],
+  'name': {'': [['str'], ['https://www.wikidata.org/wiki/Q82799']]}}]
 
     Returns:
     >>> standardize(data, metadata)
@@ -148,4 +148,40 @@ def take(data):
     return data[0:1], data[1:]
 
 def normalize(data):
-    return standardize(*take(data)[::-1])
+    return standardize(*take(data))
+
+def has_metadata(data):
+    try:
+        dummy = normalize(data[:2])
+        del dummy
+        return True
+    except:
+        return False
+
+
+def schematize(obj):
+    '''
+    Get schema of nested JSON, assuming first item in lists.
+    '''
+    if isinstance(obj, dict):
+        return {k: schematize(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [schematize(elem) for elem in obj][:1]
+    else:
+        return obj
+
+def generate_metadata_template(data):
+    """
+    Generates metadata template based on first record in data.
+    """
+    schematized = schematize(data[:1])
+
+    def visit(path, key, value):
+        if not any([isinstance(value, t) for t in [dict, list, tuple]]):
+            return key, {'': [[type(value).__name__],[]]}
+        else:
+            return key, value
+
+    remapped = remap(schematized, visit=visit)
+    remapped[0][''] = [['example.com/people', 'crawler=1.0.0'],['https://www.wikidata.org/wiki/Q35120']]
+    return remapped
