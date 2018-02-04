@@ -29,6 +29,13 @@ class Login(Base):
 
     def run(self):
 
+        # Create folder .inf, if doesn't exist
+        current_directory = os.getcwd()
+        final_directory = os.path.join(current_directory, '.inf')
+
+        if not os.path.exists(final_directory):
+            os.makedirs(final_directory)
+
         #todo: add to settings
         print('Searching servers.', end='')
         KNOWN_SERVERS = {}

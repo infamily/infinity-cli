@@ -3,6 +3,7 @@ inf
 
 Usage:
   inf init
+  inf list
   inf login
   inf upload <datafile>
   inf install <name==version>
