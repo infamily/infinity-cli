@@ -4,11 +4,13 @@ import os
 
 from .base import Base
 
-from urllib.parse import urljoin
 import pickle
 
 import slumber
 import requests
+
+from urllib.parse import urljoin, urlparse
+from infdata.ping import ping
 
 
 class Login(Base):
@@ -27,7 +29,34 @@ class Login(Base):
 
     def run(self):
 
-        root = input("Enter server url [http://0.0.0.0:8000]: ") or 'http://0.0.0.0:8000'
+        #todo: add to settings
+        print('Searching servers.', end='')
+        KNOWN_SERVERS = {}
+        for name, url in [
+                ('LOCALHOST', 'http://0.0.0.0:8000'),
+                ('Shanghai', 'https://test.wefindx.io'),
+                ('Vilnius', 'https://lt.wfx.io'),
+                ('Frankfurt', 'https://test.wefindx.io'),
+                ('DEVELOPMENT', 'https://dev.wfx.io')
+            ]:
+            KNOWN_SERVERS.update({url: ping(urlparse(url).netloc)})
+            print('.', end='')
+        print('\n')
+
+
+        min_ping = min(KNOWN_SERVERS.values())
+        DEFAULT_SERVER = [server for server in KNOWN_SERVERS
+                          if KNOWN_SERVERS[server] == min_ping][0]
+
+        root = input("Enter server url or [?] to choose [{}]: ".format(DEFAULT_SERVER)) or DEFAULT_SERVER
+
+        if root == '?':
+            choices = {i: server for i, server in enumerate(KNOWN_SERVERS)}
+            for i in choices:
+                print('[{}]'.format(i), choices[i])
+            i = input('Enter server number: ')
+            root = choices[int(i)]
+            print('Using [{}].'.format(root))
 
         config_path = os.path.join(os.getcwd(), '.inf/config')
 

@@ -3,11 +3,11 @@ inf
 
 Usage:
   inf init
-  inf -h | --help
-  inf --version
   inf login
   inf upload <datafile>
   inf install <name==version>
+  inf -h | --help
+  inf --version
 
 Options:
   -h --help                         Show this screen.
