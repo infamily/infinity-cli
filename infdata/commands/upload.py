@@ -11,6 +11,8 @@ import configparser
 from .base import Base
 from infdata.utils import take
 from infdata.utils import standardize
+from infdata.utils import has_metadata
+from infdata.utils import generate_metadata_template
 
 get_id = lambda url: url.rsplit('/', 2)[-2]
 
@@ -50,7 +52,6 @@ class Upload(Base):
         user = api.users.get()
 
         datafile = self.options.get('<datafile>')
-        datafile = 'data.jl'
 
         if datafile:
             datapath = os.path.join(os.getcwd(), datafile)
@@ -69,6 +70,25 @@ class Upload(Base):
             else:
                 print('Unknown file type for "{}". Use JSON or JSON lines.'.format(datafile))
                 return
+
+        if not has_metadata(data):
+            print("Looks like your data is missing metadata. Add metadata.")
+            try:
+                metadata_prototype = generate_metadata_template(data)
+                print('Successfully determined a template metadata for your data.')
+                pp = pprint.PrettyPrinter(indent=4)
+                print('header = ', end='')
+                pp.pprint(metadata_prototype)
+                print('Modify and prepend this as JSON header as first record in your dataset.')
+                print('Form more info on Infintiy JSON: (https://github.com/infamily/infinity-data).')
+                print('Terminating.')
+                return
+            except Exception as e:
+                print('Unable to determine the template for metadata. Check your data.')
+                print(e)
+                return
+
+
 
         header, records = take(data)
 
@@ -114,6 +134,7 @@ class Upload(Base):
                             'specification': header,
                             'owner': user[0]['url']
                         })
+                        print('Schema updated.')
 
 
             if 'specification' in schema.keys():

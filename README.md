@@ -17,13 +17,10 @@ installs records that are posts from `example.com`.
 
 ### Publish data
 ```
-$ int init # initiates folder .inf/
-
-$ inf login # saves token to .inf/config
-
-$ inf upload file.jsonl # uploads data to specified infinity server
-
-$ inf install==
+$ int init                     # initiates folder .inf/
+$ inf login                    # saves token to .inf/config
+$ inf search example.com/posts # searches for dataset versions
+$ inf upload file.json         # uploads Infinity JSON or JSON-L data to specified infinity server
 ```
 
 **Note:** the tokens `['example.com/posts', 'crawler-1.0.0']` together define a unique `[source-specific, crawler-specific]` schema.
