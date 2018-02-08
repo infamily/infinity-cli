@@ -1,3 +1,4 @@
+import itertools
 from boltons.iterutils import remap
 from functools import reduce
 import operator
@@ -170,11 +171,11 @@ def schematize(obj):
     else:
         return obj
 
-def generate_metadata_template(data):
+def generate_metadata_template(header):
     """
     Generates metadata template based on first record in data.
     """
-    schematized = schematize(data[:1])
+    schematized = schematize(header)
 
     def visit(path, key, value):
         if not any([isinstance(value, t) for t in [dict, list, tuple]]):
@@ -185,3 +186,10 @@ def generate_metadata_template(data):
     remapped = remap(schematized, visit=visit)
     remapped[0][''] = [['example.com/people', 'crawler=1.0.0'],['https://www.wikidata.org/wiki/Q35120']]
     return remapped
+
+
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return itertools.zip_longest(*args, fillvalue=fillvalue)

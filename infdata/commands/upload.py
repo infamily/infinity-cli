@@ -1,17 +1,18 @@
 """The register command."""
-
+import gzip
 import os
 import json
 import pprint
+import io
+
 import slumber
 import requests
 import json_lines
 import configparser
 
 from .base import Base
-from infdata.utils import take
+from infdata.utils import grouper
 from infdata.utils import standardize
-from infdata.utils import has_metadata
 from infdata.utils import generate_metadata_template
 
 get_id = lambda url: url.rsplit('/', 2)[-2]
@@ -41,9 +42,9 @@ class Upload(Base):
             token = config['server'].get('token')
 
             session = requests.Session()
-            header = {
+            session_header = {
                 'Authorization': 'Token {}'.format(token)}
-            session.headers.update(header)
+            session.headers.update(session_header)
         else:
             print('Error in registration. Use `inf login`')
             return
@@ -52,29 +53,26 @@ class Upload(Base):
         user = api.users.get()
 
         datafile = self.options.get('<datafile>')
+        self.datapath = os.path.join(os.getcwd(), datafile)
+        self.first_character = open(self.datapath).read(1)
 
-        if datafile:
-            datapath = os.path.join(os.getcwd(), datafile)
+        if self.first_character == '[':
+            'Assume JSON'
+            header = json.load(open(self.datapath))[0:1][0]
+        elif self.first_character == '{':
+            'Assume JSON lines'
+            with open(self.datapath, 'rb') as f:
+                for item in json_lines.reader(f):
+                    header = item
+                    break
+        else:
+            print('Unknown file type for "{}". Use JSON or JSON lines.'.format(datafile))
+            return
 
-            first_character = open(datapath).read(1)
-
-            if first_character == '[':
-                'Assume JSON'
-                data = json.load(open(datapath))
-            elif first_character == '{':
-                'Assume JSON lines'
-                data = []
-                with open(datapath, 'rb') as f:
-                    for item in json_lines.reader(f):
-                        data.append(item)
-            else:
-                print('Unknown file type for "{}". Use JSON or JSON lines.'.format(datafile))
-                return
-
-        if not has_metadata(data):
+        if not header:
             print("Looks like your data is missing metadata. Add metadata.")
             try:
-                metadata_prototype = generate_metadata_template(data)
+                metadata_prototype = generate_metadata_template(header)
                 print('Successfully determined a template metadata for your data.')
                 pp = pprint.PrettyPrinter(indent=4)
                 print('header = ', end='')
@@ -88,14 +86,10 @@ class Upload(Base):
                 print(e)
                 return
 
-
-
-        header, records = take(data)
-
         print('IDENTIFYING SCHEMA...')
         try:
-            schema_name = header[0][''][0][0]
-            schema_version = header[0][''][0][1]
+            schema_name = header[''][0][0]
+            schema_version = header[''][0][1]
 
             schemas = api.schemas.get(name=schema_name, version=schema_version).get('results')
 
@@ -104,19 +98,20 @@ class Upload(Base):
                     schema = api.schemas.post({
                         'name': schema_name,
                         'version': schema_version,
-                        'specification': header,
+                        'specification': [header],
                         'owner': user[0]['url']
                     })
-                    print('Created schema ({}): "{}=={}".'.format(schema['url'], schema['name'], schema['version']))
+                    print('Created schema ({}): "{}=={}".'.format(schema['url'], schema['name'],
+                                                                  schema['version']))
 
                 except Exception as e:
-                    print('Failed to create schema: {}'.format(meta))
+                    print('Failed to create schema: {}=={}'.format(schema_name, schema_version))
                     print(e)
             else:
                 schema = schemas[0]
                 print('Found schema ({}): "{}=={}".'.format(schema['url'], schema['name'], schema['version']))
 
-                if schema['specification'] != header:
+                if schema['specification'] != [header]:
 
                     print('\n--\nCurrent schema specification:', end='\n')
                     pp = pprint.PrettyPrinter(indent=4)
@@ -131,11 +126,10 @@ class Upload(Base):
                         schema = api.schemas(get_id(schema['url'])).patch({
                             'name': schema_name,
                             'version': schema_version,
-                            'specification': header,
+                            'specification': [header],
                             'owner': user[0]['url']
                         })
                         print('Schema updated.')
-
 
             if 'specification' in schema.keys():
 
@@ -149,32 +143,46 @@ class Upload(Base):
                         print('Operation terminated.')
                         return
 
-                normalized_records = standardize(schema['specification'], records)
-
+                print('Counting records...')
+                total_records = sum(1 for _ in self.get_records())
                 from progress.bar import Bar
-                bar = Bar('Progress', max=len(records), fill='█')
-                for i, (record, normalized_record) in enumerate(
-                        zip(records, normalized_records)):
+                bar = Bar('Progress', max=total_records, fill='█')
+                chunk_size = 1500
 
-                    instance = {
-                        'data': record,
-                        'info': normalized_record,
-                        'schema': schema['url'],
-                        'owner': user[0]['url']
-                    }
+                for chunk_records in grouper(self.get_records(), chunk_size):
+                    chunk_records = list(filter(None, chunk_records))
 
-                    api.instances.post(instance)
+                    upload_data = []
+                    normalized_records = standardize(schema['specification'], chunk_records)
+                    for i, (record, normalized_record) in enumerate(
+                            zip(chunk_records, normalized_records)):
+                        instance = {
+                            'data': record,
+                            'info': normalized_record,
+                            'schema': schema['url'],
+                            'owner': user[0]['url']
+                        }
+                        upload_data.append(json.dumps(instance))
 
-                    bar.next()
+                    if upload_data:
+                        response = api.instances_bulk._store["session"].post(
+                            url=api.instances_bulk.url(),
+                            files={
+                                'file.jl.gz': io.BytesIO(
+                                    gzip.compress('\n'.join(upload_data).encode())
+                                )
+                            }
+                        )
+                        response.raise_for_status()
+                        bar.next(len(upload_data))
 
                 bar.finish()
-
 
         except KeyboardInterrupt:
             raise
 
-        except:
-
+        except Exception as e:
+            print(repr(e))
             print('''
 Please, include schema name and version to the the metadata header. Example:
 
@@ -186,3 +194,22 @@ data = [
 ]''')
 
         print('Done.')
+
+    def get_records(self):
+        if self.first_character == '[':
+            'Assume JSON'
+            with open(self.datapath) as f:
+                jsoniter = iter(json.load(f))
+                next(jsoniter)
+                for item in jsoniter:
+                    yield item
+        elif self.first_character == '{':
+            'Assume JSON lines'
+            with open(self.datapath, 'rb') as f:
+                jsoniter = iter(json_lines.reader(f))
+                next(jsoniter)
+                for item in jsoniter:
+                    yield item
+        else:
+            raise Exception('Unknown file type for "{}". Use JSON or JSON lines.'.format(self.datapath))
+
