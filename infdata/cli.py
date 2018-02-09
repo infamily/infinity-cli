@@ -6,7 +6,7 @@ Usage:
   inf list
   inf login
   inf upload <datafile>
-  inf install <name==version>
+  inf install <name==version> [-p, --page-size <page_size>]
   inf -h | --help
   inf --version
 

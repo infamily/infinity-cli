@@ -57,6 +57,7 @@ class Install(Base):
         api = slumber.API(root, session=session)
         user = api.users.get()
 
+        page_size = self.options.get('<page_size>') or 3000
         schema_name_version = self.options.get('<name==version>')
         #schema_name_version = 'example.com/person==v1'
 
@@ -127,7 +128,7 @@ class Install(Base):
                 r = api.instances_bulk._store["session"].get(
                     url=api.instances_bulk.url(),
                     params=dict(
-                        schema=get_id(schema['url']), page=next_page_id, page_size=3000
+                        schema=get_id(schema['url']), page=next_page_id, page_size=page_size
                     ),
                     headers=headers
                 )
