@@ -47,9 +47,9 @@ class Install(Base):
             token = config['server'].get('token')
 
             session = requests.Session()
-            header = {
+            session_header = {
                 'Authorization': 'Token {}'.format(token)}
-            session.headers.update(header)
+            session.headers.update(session_header)
         else:
             print('Error in registration. Use `inf login`')
             return
@@ -57,6 +57,7 @@ class Install(Base):
         api = slumber.API(root, session=session)
         user = api.users.get()
 
+        page_size = self.options.get('<page_size>') or 3000
         schema_name_version = self.options.get('<name==version>')
         #schema_name_version = 'example.com/person==v1'
 
@@ -86,7 +87,7 @@ class Install(Base):
 
         target_path = os.path.join(os.getcwd(), '.inf/data/{}'.format(filename))
 
-        response = api.instances.get(schema=get_id(schema['url']))
+        response = api.instances_bulk.get(schema=get_id(schema['url']))
         count = response.get('count')
         limit = int(input('There are totally {} instances. Enter the number to download [all]: '.format(count)) or count)
 
@@ -115,7 +116,7 @@ class Install(Base):
         written = 0
         if response.get('next'):
             increment = write(response.get('results'))
-            [bar.next() for i in range(increment)]
+            bar.next(increment)
             written += increment
             if written >= limit:
                 print('Done.')
@@ -123,9 +124,18 @@ class Install(Base):
 
             while response.get('next'):
                 next_page_id = dict(parse_qsl(urlparse(response.get('next')).query)).get('page')
-                response = api.instances.get(schema=get_id(schema['url']), page=next_page_id)
+                headers = {'Accept-Encoding': 'gzip'}
+                r = api.instances_bulk._store["session"].get(
+                    url=api.instances_bulk.url(),
+                    params=dict(
+                        schema=get_id(schema['url']), page=next_page_id, page_size=page_size
+                    ),
+                    headers=headers
+                )
+                r.raise_for_status()
+                response = r.json()
                 increment = write(response.get('results'))
-                [bar.next() for i in range(increment)]
+                bar.next(increment)
                 written += increment
                 if written >= limit:
                     print('Done.')
