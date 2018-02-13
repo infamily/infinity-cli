@@ -35,27 +35,9 @@ class Install(Base):
     """
 
     def run(self):
+        self.load_config()
 
-        config_path = os.path.join(os.getcwd(), '.inf/config')
-        config = configparser.ConfigParser()
-        config.optionxform=str
-        config.read(config_path)
-
-        if 'server' in config.sections():
-            root = config['server'].get('root')
-            email = config['server'].get('email')
-            token = config['server'].get('token')
-
-            session = requests.Session()
-            session_header = {
-                'Authorization': 'Token {}'.format(token)}
-            session.headers.update(session_header)
-        else:
-            print('Error in registration. Use `inf login`')
-            return
-
-        api = slumber.API(root, session=session)
-        user = api.users.get()
+        user = self.api.users.get()
 
         page_size = self.options.get('<page_size>') or 3000
         schema_name_version = self.options.get('<name==version>')
@@ -68,7 +50,7 @@ class Install(Base):
         name, version = schema_name_version.rsplit('==', 1)
 
         # Lookup if the schema exists
-        schemas = api.schemas.get(name=name, version=version).get('results')
+        schemas = self.api.schemas.get(name=name, version=version).get('results')
 
         if not schemas:
             print('Schema ({}=={}) not found.'.format(name,version))
@@ -87,7 +69,7 @@ class Install(Base):
 
         target_path = os.path.join(os.getcwd(), '.inf/data/{}'.format(filename))
 
-        response = api.instances_bulk.get(schema=get_id(schema['url']))
+        response = self.api.instances_bulk.get(schema=get_id(schema['url']))
         count = response.get('count')
         limit = int(input('There are totally {} instances. Enter the number to download [all]: '.format(count)) or count)
 
@@ -125,8 +107,8 @@ class Install(Base):
             while response.get('next'):
                 next_page_id = dict(parse_qsl(urlparse(response.get('next')).query)).get('page')
                 headers = {'Accept-Encoding': 'gzip'}
-                r = api.instances_bulk._store["session"].get(
-                    url=api.instances_bulk.url(),
+                r = self.api.instances_bulk._store["session"].get(
+                    url=self.api.instances_bulk.url(),
                     params=dict(
                         schema=get_id(schema['url']), page=next_page_id, page_size=page_size
                     ),

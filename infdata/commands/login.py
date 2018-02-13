@@ -4,10 +4,7 @@ import os
 
 from .base import Base
 
-import pickle
-
 import slumber
-import requests
 
 from urllib.parse import urljoin, urlparse
 from infdata.ping import ping
