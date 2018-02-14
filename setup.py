@@ -56,7 +56,7 @@ setup(
     ],
     keywords = 'inf',
     packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires = ['docopt', 'boltons', 'slumber', 'requests', 'json-lines', 'progress'],
+    install_requires = ['docopt', 'boltons', 'slumber', 'requests', 'json-lines', 'progress', 'asyncio==3.4.3'],
     extras_require = {
         'test': ['coverage', 'pytest', 'pytest-cov'],
     },

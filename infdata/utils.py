@@ -1,4 +1,9 @@
+import inspect
 import itertools
+from importlib import import_module
+from pkgutil import iter_modules
+
+import six
 from boltons.iterutils import remap
 from functools import reduce
 import operator
@@ -193,3 +198,34 @@ def grouper(iterable, n, fillvalue=None):
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
     return itertools.zip_longest(*args, fillvalue=fillvalue)
+
+
+def walk_modules(path):
+    """Loads a module and all its submodules from the given module path and
+    returns them. If *any* module throws an exception while importing, that
+    exception is thrown back.
+
+    For example: walk_modules('inf.utils')
+    """
+
+    mods = []
+    mod = import_module(path)
+    mods.append(mod)
+    if hasattr(mod, '__path__'):
+        for _, subpath, ispkg in iter_modules(mod.__path__):
+            fullpath = path + '.' + subpath
+            if ispkg:
+                mods += walk_modules(fullpath)
+            else:
+                submod = import_module(fullpath)
+                mods.append(submod)
+    return mods
+
+
+def iter_tasks(tasks_module):
+    for module in walk_modules(tasks_module):
+        for obj in six.itervalues(vars(module)):
+            if inspect.isclass(obj) and \
+                    obj.__module__ == module.__name__ and \
+                    getattr(obj, 'name', None):
+                yield obj

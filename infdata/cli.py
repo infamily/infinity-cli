@@ -6,6 +6,8 @@ Usage:
   inf list
   inf login
   inf upload <datafile>
+  inf bind <task_name> <datafile>
+  inf tasks
   inf install <name==version> [-p, --page-size <page_size>]
   inf -h | --help
   inf --version
