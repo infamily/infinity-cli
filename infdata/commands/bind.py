@@ -7,35 +7,33 @@ import asyncio
 import json_lines
 
 from .base import Base
-from infdata.utils import iter_tasks, standardize
+from infdata.utils import iter_tasks
 
 
 class Bind(Base):
 
-    def add_records(self, records):
-        upload_data = []
-        normalized_records = standardize(self.specification, records)
-        for i, (record, normalized_record) in enumerate(zip(records, normalized_records)):
+    def post_records(self, records):
+        lines_data = []
+        for record in records:
             instance = {
                 'data': record,
-                'info': normalized_record,
                 'schema': self.schema['url'],
                 'owner': self.user['url']
             }
-            upload_data.append(json.dumps(instance))
+            lines_data.append(json.dumps(instance))
 
-        if upload_data:
-            # TODO: check exists?
+        if lines_data:
+            # check exists?
             response = self.api.instances_bulk._store["session"].post(
                 url=self.api.instances_bulk.url(),
                 files={
                     'file.jl.gz': io.BytesIO(
-                        gzip.compress('\n'.join(upload_data).encode())
+                        gzip.compress('\n'.join(lines_data).encode())
                     )
                 }
             )
             response.raise_for_status()
-            print('Added %s instances' % len(upload_data))
+            print('Added %s instances' % len(lines_data))
 
     def run(self):
         self.load_config()
@@ -89,7 +87,7 @@ class Bind(Base):
             while True:
                 records = yield from task.update()
                 if records:
-                    self.add_records(records)
+                    self.post_records(records)
                 yield from asyncio.sleep(10)
 
         loop.run_until_complete(main())
