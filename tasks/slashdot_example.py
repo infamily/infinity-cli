@@ -4,13 +4,29 @@ import aiohttp
 
 class Task(object):
     name = 'slashdot'
-    last_date = None
+    schema_name = 'slashdot.org/idea'
+    schema_version = 'schema-version=1.0.0'
+    schema_source_url = 'http://rss.slashdot.org/Slashdot/slashdotMain'
+    schema = {
+        'date': {'': [['str'], []]},
+        'description': {'': [['str'], []]},
+        'link': {'': [['str'], []]},
+        'title': {'': [['str'], []]}
+    }
 
     def __init__(self, loop):
         self.loop = loop
         self.session = None
         self.seen_item_links = set()
         self.prev_headers = None
+
+    @property
+    def specification(self):
+        result = {
+            '': [[self.schema_name, self.schema_version], [self.schema_source_url]]
+        }
+        result.update(self.schema)
+        return result
 
     async def update(self):
         headers = {}
