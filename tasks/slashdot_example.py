@@ -1,33 +1,33 @@
-import asyncio
-import logging
-import requests
 import xml.etree.ElementTree as ET
+import aiohttp
 
 
 class Task(object):
     name = 'slashdot'
     last_date = None
 
-    def __init__(self, loop, log=None):
+    def __init__(self, loop):
         self.loop = loop
-        self.log = log or logging.getLogger('tasks.%s' % self.name)
+        self.session = None
+        self.seen_item_links = set()
+        self.prev_headers = None
 
     async def update(self):
         headers = {}
-        if self.last_date:
-            headers = {
-                'If-Modified-Since': self.last_date
-            }
+        if self.prev_headers and self.prev_headers.get('ETag', None):
+            headers = {'If-None-Match': self.prev_headers.get('ETag', None)}
 
-        # use aiohttp ?
-        r = requests.get('http://rss.slashdot.org/Slashdot/slashdotMain', headers=headers)
-        if r.status_code == 304:
-            self.log.info('No new data')
+        self.session = self.session or aiohttp.ClientSession()
+        r = await self.session.get('http://rss.slashdot.org/Slashdot/slashdotMain', headers=headers)
+
+        if r.status == 304:
             return []
-        r.raise_for_status()
-        self.last_date = r.headers['Last-Modified']
 
-        root = ET.fromstring(r.content)
+        r.raise_for_status()
+        self.prev_headers = r.headers
+
+        content = await r.text()
+        root = ET.fromstring(content)
         items = root.findall('.//{http://purl.org/rss/1.0/}item')
         items_list = []
         for item in items:
@@ -35,6 +35,11 @@ class Task(object):
             link = item.find('{http://purl.org/rss/1.0/}link')
             description = item.find('{http://purl.org/rss/1.0/}description')
             date = item.find('{http://purl.org/dc/elements/1.1/}date')
+
+            if link.text in self.seen_item_links:
+                continue
+            else:
+                self.seen_item_links.add(link.text)
 
             item_dict = {}
             item_dict.update({'title': title.text})

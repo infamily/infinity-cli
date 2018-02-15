@@ -62,7 +62,8 @@ setup(
         'requests',
         'json-lines',
         'progress',
-        'asyncio==3.4.3'
+        'asyncio==3.4.3',
+        'aiohttp==2.3.10'
     ],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov'],
