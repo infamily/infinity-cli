@@ -69,7 +69,10 @@ class Run(Base):
                 schemas = self.api.schemas.get(name=task.schema_name, version=task.schema_version).get('results')
             except Exception as e:
                 print('Failed to create schema: {}=={}'.format(task.schema_name, task.schema_version))
-                print(e)
+                if hasattr(e, 'content'):
+                    print(e, e.content)
+                else:
+                    print(e)
         self.schema = schemas[0]
 
 
