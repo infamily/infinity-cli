@@ -5,10 +5,7 @@ import json
 import pprint
 import io
 
-import slumber
-import requests
 import json_lines
-import configparser
 
 from .base import Base
 from infdata.utils import grouper
@@ -30,27 +27,9 @@ class Upload(Base):
     """
 
     def run(self):
+        self.load_config()
 
-        config_path = os.path.join(os.getcwd(), '.inf/config')
-        config = configparser.ConfigParser()
-        config.optionxform=str
-        config.read(config_path)
-
-        if 'server' in config.sections():
-            root = config['server'].get('root')
-            email = config['server'].get('email')
-            token = config['server'].get('token')
-
-            session = requests.Session()
-            session_header = {
-                'Authorization': 'Token {}'.format(token)}
-            session.headers.update(session_header)
-        else:
-            print('Error in registration. Use `inf login`')
-            return
-
-        api = slumber.API(root, session=session)
-        user = api.users.get()
+        user = self.api.users.get()
 
         datafile = self.options.get('<datafile>')
         self.datapath = os.path.join(os.getcwd(), datafile)
@@ -91,11 +70,11 @@ class Upload(Base):
             schema_name = header[''][0][0]
             schema_version = header[''][0][1]
 
-            schemas = api.schemas.get(name=schema_name, version=schema_version).get('results')
+            schemas = self.api.schemas.get(name=schema_name, version=schema_version).get('results')
 
             if not schemas:
                 try:
-                    schema = api.schemas.post({
+                    schema = self.api.schemas.post({
                         'name': schema_name,
                         'version': schema_version,
                         'specification': [header],
@@ -123,7 +102,7 @@ class Upload(Base):
                     overwrite = input('Do you want to overwrite its specification with header? [y/N] ')
 
                     if overwrite in ['y', 'Y']:
-                        schema = api.schemas(get_id(schema['url'])).patch({
+                        schema = self.api.schemas(get_id(schema['url'])).patch({
                             'name': schema_name,
                             'version': schema_version,
                             'specification': [header],
@@ -135,7 +114,7 @@ class Upload(Base):
 
                 print('UPLOADING INSTANCES...')
 
-                if api.instances.get(schema=schema['url']):
+                if self.api.instances.get(schema=schema['url']):
                     proceed = input('Schema already has data instances. Continue adding more instnaces? (may create duplicates) [y/N] ')
                     if proceed in ['y', 'Y']:
                         pass
@@ -165,8 +144,8 @@ class Upload(Base):
                         upload_data.append(json.dumps(instance))
 
                     if upload_data:
-                        response = api.instances_bulk._store["session"].post(
-                            url=api.instances_bulk.url(),
+                        response = self.api.instances_bulk._store["session"].post(
+                            url=self.api.instances_bulk.url(),
                             files={
                                 'file.jl.gz': io.BytesIO(
                                     gzip.compress('\n'.join(upload_data).encode())

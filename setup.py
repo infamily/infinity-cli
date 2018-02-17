@@ -6,7 +6,6 @@ from setuptools import Command, find_packages, setup
 
 from infdata import __version__
 
-
 this_dir = abspath(dirname(__file__))
 with open(join(this_dir, 'README.md'), encoding='utf-8') as file:
     long_description = file.read()
@@ -30,15 +29,15 @@ class RunTests(Command):
 
 
 setup(
-    name = 'infdata',
-    version = __version__,
-    description = 'Package management command for data.',
-    long_description = long_description,
-    url = 'https://github.com/infamily/infinity-data',
-    author = 'Mindey I.',
-    author_email = 'mindey@qq.com',
-    license = 'UNLICENSE',
-    classifiers = [
+    name='infdata',
+    version=__version__,
+    description='Package management command for data.',
+    long_description=long_description,
+    url='https://github.com/infamily/infinity-data',
+    author='Mindey I.',
+    author_email='mindey@qq.com',
+    license='UNLICENSE',
+    classifiers=[
         'Intended Audience :: Developers',
         'Topic :: Utilities',
         'License :: Public Domain',
@@ -54,16 +53,25 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    keywords = 'inf',
-    packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires = ['docopt', 'boltons', 'slumber', 'requests', 'json-lines', 'progress'],
-    extras_require = {
+    keywords='inf',
+    packages=find_packages(exclude=['docs', 'tests*']),
+    install_requires=[
+        'docopt',
+        'boltons',
+        'slumber',
+        'requests',
+        'json-lines',
+        'progress',
+        'asyncio==3.4.3',
+        'aiohttp==2.3.10'
+    ],
+    extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov'],
     },
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'inf=infdata.cli:main',
         ],
     },
-    cmdclass = {'test': RunTests},
+    cmdclass={'test': RunTests},
 )
