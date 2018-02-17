@@ -83,3 +83,23 @@ Result is:
   {'Q2633778': 2011.19, 'y': [{'z': 4}, {'u': 3}]},
 ]
 ```
+
+# Infinity CSV
+
+Sometimes we want to include schema and type (`S`, `T`) into CSV. In that case, we use `|` to separate them:
+
+```
+Column Name|S|T,
+```
+
+For example:
+
+```
+Name||,Surname||,
+```
+
+If we want to enforce some rules, we could do then:
+
+```
+Name|str|https://www.wikidata.org/wiki/Q82799,Surname|str,lambda x: x[:10]|https://www.wikidata.org/wiki/Q101352,
+```
