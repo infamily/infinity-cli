@@ -63,7 +63,8 @@ setup(
         'json-lines',
         'progress',
         'asyncio==3.4.3',
-        'aiohttp==2.3.10'
+        'aiohttp==2.3.10',
+        'feedparser'
     ],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov'],
