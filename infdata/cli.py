@@ -12,6 +12,7 @@ Usage:
   inf tasks
   inf -h | --help
   inf --version
+  inf init
 
 Options:
   -h --help                         Show this screen.

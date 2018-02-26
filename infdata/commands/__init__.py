@@ -1,3 +1,4 @@
+from .init import *
 from .login import *
 from .switch import *
 
