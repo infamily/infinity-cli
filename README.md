@@ -10,24 +10,24 @@ Just `pip install infdata`, and start getting data.
 
 For example,
 ```
-$ inf install example.com/posts==crawler-1.0.0
+$ inf pull example.com/posts==crawler-1.0.0
 ```
 
-installs records that are posts from `example.com`.
+pulls records that are posts from `example.com/posts`, `crawler-1.0.0` version.
 
 ### Publish data
 ```
 $ int init                     # initiates folder .inf/
 $ inf login                    # saves token to .inf/config
 $ inf search example.com/posts # searches for dataset versions
-$ inf upload file.json         # uploads Infinity JSON or JSON-L data to specified infinity server
+$ inf push file.json           # uploads Infinity JSON or JSON-L data to specified infinity server
 ```
 
 **Note:** the tokens `['example.com/posts', 'crawler-1.0.0']` together define a unique `[source-specific, crawler-specific]` schema.
 
 # Infinity JSON
 
-Infinity JSON format includes a header line, which specifies schemas (`[S]`) and types (`[T]`) for its records. 
+Infinity JSON format includes a header line, which specifies schemas (`[S]`) and types (`[T]`) for its records.
 
 Example:
 

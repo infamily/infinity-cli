@@ -1,4 +1,4 @@
-"""The install command."""
+"""The pull command."""
 
 import os
 import json
@@ -18,7 +18,7 @@ from .base import Base
 get_id = lambda url: url.rsplit('/', 2)[-2]
 
 
-class Install(Base):
+class Pull(Base):
     """.
 
     Given:
@@ -26,9 +26,9 @@ class Install(Base):
 
     Result:
     - The string is split into schema_name, schema_version.
-    - The version is looked up, and the records 
+    - The version is looked up, and the records
       are downloadeded and saved to the .inf/data/ as json lines
-      named as 
+      named as
     - If there are new records, they are appended to the bottom
       of the file.
 
@@ -44,7 +44,7 @@ class Install(Base):
         #schema_name_version = 'example.com/person==v1'
 
         if not '==' in schema_name_version:
-            print('Please, use: inf install name==version.')
+            print('Please, use: inf pull name==version.')
             return
 
         name, version = schema_name_version.rsplit('==', 1)
@@ -74,7 +74,7 @@ class Install(Base):
         limit = int(input('There are totally {} instances. Enter the number to download [all]: '.format(count)) or count)
 
         if os.path.exists(target_path):
-            proceed = input('The data of this schema already installed. Are you sure you want to reinstall it? [y/N] ')
+            proceed = input('The data of this schema already present. Are you sure you want to recreate it? [y/N] ')
             if proceed not in ['y', 'Y']:
                 print('Stopped.')
                 return

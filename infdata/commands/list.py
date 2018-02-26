@@ -1,4 +1,4 @@
-"""The install command."""
+"""The list command."""
 
 import os
 import json
@@ -21,6 +21,10 @@ class List(Base):
         self.load_config()
 
         schema_name = self.options.get('<name>')
+
+        if not hasattr(self, 'api'):
+            print('No api configuration. Try logging in by `inf login`')
+            return
 
         for schema in self.api.schemas.get()['results']:
             print('{}=={}'.format(schema['name'], schema['version']))

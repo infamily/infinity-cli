@@ -2,13 +2,14 @@
 inf
 
 Usage:
-  inf init
-  inf list
   inf login
-  inf upload <datafile>
+  inf login <server>
+  inf switch
+  inf list
+  inf push <datafile>
+  inf pull <name==version> [-p, --page-size <page_size>]
   inf run <task_name>
   inf tasks
-  inf install <name==version> [-p, --page-size <page_size>]
   inf -h | --help
   inf --version
 
@@ -18,8 +19,8 @@ Options:
 
 Examples:
   inf init
-  inf upload data.json
-  inf install example.com/people==crawler-1.0.0
+  inf push data.json
+  inf pull example.com/people==crawler-1.0.0
 
 Help:
   For help using this tool, please open an issue on the Github repository:
@@ -41,7 +42,7 @@ def main():
 
     # Here we'll try to dynamically match the command the user is trying to run
     # with a pre-defined command class we've already created.
-    for (k, v) in options.items(): 
+    for (k, v) in options.items():
         if hasattr(infdata.commands, k) and v:
             module = getattr(infdata.commands, k)
             infdata.commands = getmembers(module, isclass)
