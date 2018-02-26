@@ -20,10 +20,17 @@ class Base(object):
         self.config.optionxform = str
         self.config.read(config_path)
 
-        if 'server' in self.config.sections():
-            self.api_base_url = self.config['server'].get('root')
-            self.auth_email = self.config['server'].get('email')
-            auth_token = self.config['server'].get('token')
+        current = self.config['current']['server']
+
+        tokens_path = os.path.join(os.getcwd(), '.inf/tokens')
+        tokens = configparser.ConfigParser()
+        tokens.optionxform = str
+        tokens.read(tokens_path)
+
+        if current in tokens.sections():
+            self.api_base_url = tokens[current].get('root')
+            self.auth_email = tokens[current].get('email')
+            auth_token = tokens[current].get('token')
 
             if auth_token:
                 self.api_session = requests.Session()

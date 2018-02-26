@@ -15,8 +15,8 @@ from infdata.utils import generate_metadata_template
 get_id = lambda url: url.rsplit('/', 2)[-2]
 
 
-class Upload(Base):
-    """Register a schema, and upload data to Infinity server.
+class Push(Base):
+    """Register a schema, and push data to Infinity server.
 
     Given:
     >>> pair = ['example.com/posts', 'crawler-1.0.0'],
