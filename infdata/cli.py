@@ -4,7 +4,7 @@ inf
 Usage:
   inf login
   inf login <server>
-  inf switch
+  inf which
   inf list
   inf push <datafile>
   inf pull <name==version> [-p, --page-size <page_size>]

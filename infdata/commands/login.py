@@ -27,21 +27,6 @@ class Login(Base):
 
     def run(self):
 
-        # Create folder .inf, if doesn't exist
-        current_directory = os.getcwd()
-        final_directory = os.path.join(current_directory, '.inf')
-
-        if not os.path.exists(final_directory):
-            os.makedirs(final_directory)
-            # Create default servers from the settings
-        if not os.path.exists(os.path.join(final_directory, 'config')):
-            with open(os.path.join(final_directory, 'config'), 'w') as f:
-                content = '[servers]\n'+'\n'.join(
-                    ['='.join(pair) for pair in settings.INITIAL_SERVERS]
-                )
-                content += '\n\n[current]\nserver={}'.format(settings.INITIAL_CURRENT)
-                f.write(content)
-
         if not self.options.get('<server>'):
 
             config = configparser.ConfigParser()
@@ -89,12 +74,6 @@ class Login(Base):
 
         print('Connecting to {}.'.format(root))
         config_path = os.path.join(os.getcwd(), '.inf/tokens')
-
-        proceed = input('Generate token for server [{}]? [y/N] '.format(root))
-        if proceed in ['y', 'Y']:
-            pass
-        else:
-            return
 
         # Read whole config from .inf/tokens
         if not os.path.exists(config_path):

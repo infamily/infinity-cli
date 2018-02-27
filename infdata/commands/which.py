@@ -6,7 +6,7 @@ from .base import Base
 import configparser
 
 
-class Switch(Base):
+class Which(Base):
 
     def run(self):
 
@@ -16,14 +16,23 @@ class Switch(Base):
         tokens.optionxform=str
         tokens.read('.inf/tokens')
 
-        for i, section in enumerate(tokens.sections()):
-            print('[{}]: ({}) {}'.format(i, section, tokens[section]['root']))
-
         config = configparser.ConfigParser()
         config.optionxform=str
         config.read('.inf/config')
 
         current = config['current']['server']
+
+        if current not in tokens.sections():
+            print("Have no token of server [{}]. Login first.".format(current))
+            return
+
+        for i, section in enumerate(tokens.sections()):
+            if current == section:
+                print('*', end='')
+            else:
+                print(' ', end='')
+
+            print('[{}]: ({}) {}'.format(i, section, tokens[section]['root']))
 
         CURRENT_ID = tokens.sections().index(current)
 
@@ -33,3 +42,5 @@ class Switch(Base):
 
         with open('.inf/config', 'w') as f:
             config.write(f)
+
+        print('Switched to [{}] server.'.format(config['current']['server']))

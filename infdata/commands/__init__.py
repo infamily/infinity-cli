@@ -1,6 +1,6 @@
 from .init import *
 from .login import *
-from .switch import *
+from .which import *
 
 from .list import *
 
