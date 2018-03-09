@@ -9,6 +9,7 @@ import configparser
 class Which(Base):
 
     def run(self):
+        self.load_config()
 
         current_directory = os.getcwd()
 

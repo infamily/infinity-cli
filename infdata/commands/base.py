@@ -4,6 +4,7 @@ import os
 
 import requests
 import slumber
+from infdata import settings
 
 
 class Base(object):

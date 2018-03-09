@@ -26,6 +26,7 @@ class Login(Base):
     """
 
     def run(self):
+        self.load_config()
 
         if not self.options.get('<server>'):
 
