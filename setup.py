@@ -64,7 +64,8 @@ setup(
         'progress',
         'asyncio==3.4.3',
         'aiohttp==2.3.10',
-        'feedparser'
+        'feedparser',
+        'wxpy'
     ],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov'],
