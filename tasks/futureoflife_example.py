@@ -6,8 +6,8 @@ import feedparser
 
 class Task(object):
     name = 'futureoflife'
-    schema_name = 'futureoflife.org/idea'
-    schema_version = 'schema-version=1.0.0'
+    schema_name = 'futureoflife.org/article'
+    schema_version = 'schema-version==1.0.0'
     schema_source_url = 'https://futureoflife.org/feed/'
     schema = {
         'date': {'': [['str'], []]},

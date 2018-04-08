@@ -4,8 +4,8 @@ import aiohttp
 
 class Task(object):
     name = 'slashdot'
-    schema_name = 'slashdot.org/idea'
-    schema_version = 'schema-version=1.0.0'
+    schema_name = 'slashdot.org/article'
+    schema_version = 'schema-version==1.0.0'
     schema_source_url = 'http://rss.slashdot.org/Slashdot/slashdotMain'
     schema = {
         'date': {'': [['str'], []]},
